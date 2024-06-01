@@ -165,7 +165,7 @@ router.post("/", async (req, res, next) => {
 
   try {
     pdfContent = await renderPdfTemplate("standard-payslip", body);
-
+    console.log(body);
     if (body.type === "download") {
       res.attachment(pdfFileName);
       return res.send(pdfContent);
@@ -198,5 +198,6 @@ router.post("/", async (req, res, next) => {
     return next(err);
   }
 });
+
 
 export default router;

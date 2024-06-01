@@ -10,18 +10,21 @@ import https from "https";
 import dotenv from "dotenv";
 dotenv.config();
 import payslipRouter from "./routes/payslip";
+const mongoose = require('mongoose');
+//const Payroll = require('./models/payroll');
+
+const uri = "mongodb+srv://root:root@cluster0.n4omawl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+async function runMongo(){
+  const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
+  await mongoose.connect(uri, clientOptions);
+     await mongoose.connection.db.admin().command({ ping: 1 });
+     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+}
+
 
 const app = express();
 
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, '/tmp/')
-//   },
-//   filename: function (req, file, cb) {
-//     const uniqueSuffix = Date.now();
-//     cb(null, uniqueSuffix + path.extname(file.originalname))
-//   }
-// })
+
 
 const upload = multer({
   // If dest and storage property doesn't specify in multer, file will send a Buffer Object to req.file
@@ -55,7 +58,24 @@ app.use("/health", (req, res, next) => {
 });
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/", express.static(path.join(__dirname, "client", "build")));
+app.post('/payroll', async (req, res) => {
+  try {
+      const payroll = new Payroll(req.body);
+      await payroll.save();
+      res.status(201).send(payroll);
+  } catch (error) {
+      res.status(400).send(error);
+  }
+});
 
+app.get('/payroll', async (req, res) => {
+  try {
+      const payrolls = await Payroll.find();
+      res.status(200).send(payrolls);
+  } catch (error) {
+      res.status(500).send(error);
+  }
+});
 app.use("/api/payslip", upload.single("companyIcon"), payslipRouter);
 
 // catch 404 and forward to error handler
